@@ -1,5 +1,6 @@
 import copy
 import re
+from math import gcd
 
 input = """<x=17, y=5, z=1>
 <x=-2, y=-8, z=8>
@@ -42,6 +43,7 @@ def get_energy(b):
 def sim_step(bodies):
 	for body1 in bodies:
 		for body2 in bodies:
+			if body2 == body1: continue
 			body1.vx += (body1.x < body2.x) - (body1.x > body2.x)
 			body1.vy += (body1.y < body2.y) - (body1.y > body2.y)
 			body1.vz += (body1.z < body2.z) - (body1.z > body2.z)
@@ -58,6 +60,8 @@ def sim_energy(bodies, steps):
 		bodies = sim_step(bodies)
 	return sum([get_energy(b) for b in bodies])
 
+def lcm(a, b): return abs(a*b) / gcd(a, b) if a and b else 0
+
 coords_test = [get_coords(test1), get_coords(test2)]
 in_coords = get_coords(input)
 
@@ -65,15 +69,27 @@ print(sim_energy(copy.deepcopy(coords_test[0]), 10))
 print(sim_energy(copy.deepcopy(coords_test[1]), 100))
 print("Part 1: ", sim_energy(copy.deepcopy(in_coords), 1000))
 
+dupes = []
+for coord in "xyz":
+	pvset = {}
+	step = 0
+	bodies = copy.deepcopy(in_coords)
+	while True:
+		state = []
+		for n in range(4):
+			state.append(getattr(bodies[n], coord))
+			state.append(getattr(bodies[n], 'v' + coord))
+		state = tuple(state)
+		if state in pvset:
+			print("Found duplicate %s state after %d steps" % (coord,step))
+			dupes.append(step)
+			break
+		else:
+			pvset[state] = 1
+			step += 1
+			bodies = sim_step(bodies)
 
-energy_set = {}
-step = 0
-bodies = copy.deepcopy(coords_test[1])
-while True:
-	energy = sum([get_energy(b) for b in bodies])
-	print(bodies, energy)
-	if energy == 0:
-		print("Found 0 energy at step %d: " % (step), bodies)
-	bodies = sim_step(bodies)
-	step += 1
-	if step % 10000000 == 0: print(step)
+lcm0 = int(lcm(dupes[0], dupes[1]))
+lcm1 = int(lcm(dupes[1], dupes[2]))
+dupe_time = int(lcm(lcm0, lcm1))
+print("Part 2: ", dupe_time)
