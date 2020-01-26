@@ -2,6 +2,7 @@ import copy
 import math
 import time
 import os
+import numpy as np
 
 # Apparently this only takes twice as long as the optimal bitmask-based algorithm. (!!)
 # An intrinsic function might be added to Python 3.9. Strange how poorly-supported
@@ -74,3 +75,91 @@ while True:
 		seen[grid.state] = 1
 
 
+# Well, that was fun, but part 2 is totally different. :-(
+def recursive_evolve(map):
+	adjmap = np.zeros_like(map)
+	
+	for d in range(1, 398):
+		for x in range(5):
+			for y in range(5):
+				if x == 2 and y == 2: continue
+				adj = 0
+				
+				# Left tile
+				if x == 0:
+					adj += map[d-1, 1, 2]
+				elif x == 3 and y == 2:
+					adj += sum(map[d+1, 4, :])
+				else:
+					adj += map[d, x-1, y]
+
+				# Right tile
+				if x == 4:
+					adj += map[d-1, 3, 2]
+				elif x == 1 and y == 2:
+					adj += sum(map[d+1, 0, :])
+				else:
+					adj += map[d, x+1, y]
+
+				# Top tile
+				if y == 0:
+					adj += map[d-1, 2, 1]
+				elif x == 2 and y == 3:
+					adj += sum(map[d+1, :, 4])
+				else:
+					adj += map[d, x, y-1]
+				
+				# Bottom tile
+				if y == 4:
+					adj += map[d-1, 2, 3]
+				elif x == 2 and y == 1:
+					adj += sum(map[d+1, :, 0])
+				else:
+					adj += map[d, x, y+1]
+				
+				adjmap[d,x,y] = adj
+	
+	for d in range(1, 398):
+		for x in range(5):
+			for y in range(5):
+				if x == 2 and y== 2: continue
+				
+				if map[d,x,y] == 1 and adjmap[d,x,y] != 1:
+					map[d,x,y] = 0
+				elif map[d,x,y] == 0 and (adjmap[d,x,y] == 1 or adjmap[d,x,y] == 2):
+					map[d,x,y] = 1
+	return adjmap
+
+basemap = np.zeros((400,5,5), dtype=np.int32)
+ingrid = np.array([[1,1,0,1,0],
+                   [1,1,0,1,0],
+		           [1,1,0,1,1],
+		           [0,1,1,1,1],
+		           [0,1,0,0,0]], dtype=np.int32).transpose()
+
+testgrid = np.array([[0,0,0,0,1],
+                     [1,0,0,1,0],
+			         [1,0,0,1,1],
+			         [0,0,1,0,0],
+			         [1,0,0,0,0]], dtype=np.int32).transpose()
+
+def printgrid(map, d):
+	for y in range(5):
+		for x in range(5):
+			if x == 2 and y == 2: print("*", end='')
+			elif map[d,x,y] == 0: print("-", end='')
+			else: print(map[d,x,y], end='')
+		print()
+
+basemap[200] = ingrid
+
+for n in range(200):
+	recursive_evolve(basemap)
+
+for d in range(199, 201+1):
+	printgrid(basemap, d)
+	print()
+
+print("Part 2: ", sum(sum(sum(basemap))))
+
+quit()
