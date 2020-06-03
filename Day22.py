@@ -93,14 +93,16 @@ print("Part 1: ", out)
 # Now we need to invert the transformations
 def invert_shuffle(instructions, deck_len, card):
 	for line in reversed(instructions.rstrip().split('\n')):
-		print(card, " ", end='')
+#		print(card, " ", end='')
 		if re.match(r'deal into new stack', line) != None:
 			card = (deck_len - 1) - card
 			print("stack -> ", card)
 		elif re.match(r'deal with increment', line) != None:
 			inc = int(line.split(' ')[-1])
-			card = (card + deck_len*(abs(inc - card) % inc)) // inc
-			print("inc ", inc, " -> ", card)
+#			card = (card + deck_len*(abs(inc - card) % inc)) // inc
+			new_inc = deck_len - inc
+			card = (card * new_inc) % deck_len
+#			print("inc ", inc, " -> ", card)
 		elif re.match(r'cut', line) != None:
 			N = int(line.split(' ')[-1])
 			print("cut ", N, " -> ", end='')
@@ -111,10 +113,59 @@ def invert_shuffle(instructions, deck_len, card):
 			print(card)
 	return card
 
+
+dsize = 7
+for n in [3,5]:
+	t = 'deal with increment %d\n' % (n)
+	org = list(range(0, dsize))
+	out = [None] * dsize
+	orv = [None] * dsize
+	fwd = [None] * dsize
+	rev = [None] * dsize
+	
+	for c in org:
+		fwd[c] = shuffle_one_card(t, dsize, c)
+		rev[c] = invert_shuffle(t, dsize, c)
+	for c in org:
+		out[fwd[c]] = c
+	for c in org:
+		orv[rev[c]] = out[c]
+	
+	print("org %d |  " % n + "  ".join([hex(c)[2:] for c in org]))
+	print("orv %d |  " % n + "  ".join([hex(c)[2:] for c in orv]) + (" FAIL" if orv != org else ""))
+	print("out %d |  " % n + "  ".join([hex(c)[2:] for c in out]))
+	print("rev %d |  " % n + "  ".join([hex(c)[2:] for c in rev]) + (" FAIL" if rev != out else ""))
+	print("fwd %d |  " % n + "  ".join([hex(c)[2:] for c in fwd]))
+	print()
+	
+	# print("inc %d | " % n, end='')
+	# for c in range(0, dsize):
+		# new_loc = shuffle_one_card(t, dsize, c)
+		# out[new_loc] = c
+	# print(" " + "  ".join([hex(n)[2:] for n in out]))
+	
+	# print("rev %d | " % n, end='')
+	# print(" " + "  ".join([hex(invert_shuffle(t, dsize, c))[2:] for c in range(0,dsize)]))
+	# print("rev %d | " % n, end='')
+	# out2 = [None] * dsize
+	# for c in range(0, dsize):
+		# new_loc = invert_shuffle(t, dsize, c)
+		# out2[new_loc] = out[c]
+	# print(" " + "  ".join([hex(n)[2:] for n in out2]))
+	# print()
+
+quit()
+t = 'deal with increment 7'
+out = shuffle_one_card(t, 10, 2)
+print(out)
+out = invert_shuffle(t, 10, 4)
+print(out)
+quit()
+
 out = shuffle_one_card(tin4, 10, 1)
-#print(out)
-#out = invert_shuffle(tin4, 10, 4)
-#print(out)
+print("1 -> ", out)
+out = invert_shuffle(tin4, 10, 4)
+print(out)
 for n in range(0, 10):
 	inst = "deal with increment %d" % 3
 	out = invert_shuffle(inst, 10, n)
